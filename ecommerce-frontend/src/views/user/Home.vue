@@ -154,17 +154,19 @@ onMounted(() => {
 
 <style scoped>
 .home-container {
-  background: #f5f5f5;
+  background: #f5f7fa;
   min-height: calc(100vh - 60px);
-  padding-bottom: 10px;
+  padding-bottom: 40px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .banner {
   margin: 12px 16px;
-  border-radius: 12px;
+  border-radius: 20px;
+  height: 160px;
   overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .banner-item {
@@ -175,6 +177,7 @@ onMounted(() => {
   color: white;
   font-size: 24px;
   font-weight: bold;
+  transition: transform 0.3s ease;
 }
 
 .quick-entry {
@@ -183,97 +186,129 @@ onMounted(() => {
   justify-content: space-around;
   padding: 16px;
   margin: 12px 16px;
-  border-radius: 12px;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 .entry-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 10px 20px;
+  border-radius: 16px;
+}
+
+.entry-item:hover {
+  background: rgba(64, 158, 255, 0.08);
+  transform: translateY(-3px);
 }
 
 .entry-icon {
-  font-size: 28px;
+  font-size: 32px;
 }
 
 .entry-item span {
-  font-size: 12px;
-  color: #666;
+  font-size: 13px;
+  color: #5a6874;
+  font-weight: 500;
 }
 
 .section {
   background: white;
-  margin: 12px 16px;
-  border-radius: 12px;
-  padding: 12px;
+  margin: 20px;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #f5f5f5;
+  border-bottom: 2px solid #f0f2f5;
 }
 
 .section-header h3 {
-  font-size: 16px;
+  font-size: 18px;
   margin: 0;
-  color: #333;
+  color: #2c3e50;
+  font-weight: 600;
 }
 
 .more {
-  font-size: 12px;
-  color: #999;
+  font-size: 13px;
+  color: #409eff;
   cursor: pointer;
+  transition: opacity 0.3s;
 }
 
+.more:hover {
+  opacity: 0.7;
+}
+
+/* 修改为3列布局 */
 .goods-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
 }
 
 .goods-card {
-  background: #f9f9f9;
-  border-radius: 8px;
+  background: #f8f9fc;
+  border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-.goods-card:active {
-  transform: scale(0.98);
+.goods-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+  border-color: transparent;
 }
 
 .goods-img {
-  height: 220px;
+  height: 200px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
+  transition: transform 0.3s ease;
+}
+
+.goods-card:hover .goods-img {
+  transform: scale(1.02);
 }
 
 .goods-info {
-  padding: 8px;
+  padding: 14px;
 }
 
 .goods-title {
-  font-size: 12px;
-  color: #333;
-  margin-bottom: 4px;
+  font-size: 13px;
+  color: #2c3e50;
+  margin-bottom: 8px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 500;
 }
 
 .goods-price {
   color: #f56c6c;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: bold;
+}
+
+.goods-price::before {
+  content: '¥';
+  font-size: 12px;
 }
 </style>

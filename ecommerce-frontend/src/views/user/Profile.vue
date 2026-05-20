@@ -91,7 +91,7 @@
         </div>
       </div>
       <div class="order-footer">
-        <div class="order-total">总计: ¥{{ formatPrice(order.totalAmount) }}</div>
+        <div class="order-total">总计: ¥{{ (formatPrice(order.totalAmount)/100).toFixed(2) }}</div>
         <div class="order-actions">
           <!-- 待收货状态显示确认收货按钮 -->
           <el-button
@@ -774,3 +774,4 @@ onMounted(() => {
   color: #999;
 }
 </style>
+
