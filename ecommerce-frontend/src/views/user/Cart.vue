@@ -214,7 +214,8 @@ const checkoutSelected = async () => {
         quantity: item.quantity,
         price: item.price
       })),
-      totalAmount: Math.round(selectedTotalPrice.value * 100),
+      // selectedTotalPrice 已为分（price 的单位为分），直接传递
+      totalAmount: Math.round(selectedTotalPrice.value),
       status: 'PAID',
       createdDate: new Date()
     }
