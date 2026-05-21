@@ -177,7 +177,7 @@ onMounted(() => {
 }
 
 .detail-title {
-  font-size: 28px;
+  font-size: 24px;
   margin-bottom: 16px;
   color: #2c3e50;
   font-weight: 700;
@@ -186,6 +186,7 @@ onMounted(() => {
 .detail-spec {
   color: #7a8a9a;
   margin-bottom: 24px;
+  font: 22px;
   line-height: 1.8;
   background: #f8f9fc;
   padding: 16px;
@@ -193,7 +194,7 @@ onMounted(() => {
 }
 
 .detail-price {
-  font-size: 38px;
+  font-size: 28px;
   color: #f56c6c;
   font-weight: bold;
   margin: 24px 0;

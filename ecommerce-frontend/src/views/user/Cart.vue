@@ -106,7 +106,7 @@ const loadCart = async () => {
     if (cart && cart.items && cart.items.length > 0) {
       cartItems.value = cart.items.map(item => ({
         ...item,
-        selected: true
+        selected: false
       }))
     } else {
       cartItems.value = []
@@ -245,7 +245,7 @@ onMounted(() => {
   background: #f5f5f5;
   max-width: 1200px;
   margin: 0 auto;
-  padding-bottom: 80px;
+  padding-bottom: 140px; /* 留出足够底部空间，避免内容被底部固定栏遮挡 */
 }
 
 .cart-header {
@@ -361,6 +361,7 @@ onMounted(() => {
   align-items: center;
   border-top: 1px solid #eee;
   box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+  z-index: 60; /* 保证底部栏覆盖列表项 */
 }
 
 .total-info {

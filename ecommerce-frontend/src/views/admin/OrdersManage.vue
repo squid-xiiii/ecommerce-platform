@@ -1,11 +1,17 @@
 <template>
   <div class="orders-manage">
-    <h2 class="page-title">订单管理</h2>
+    <div class="title-bar" style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+      <h2 class="page-title">订单管理</h2>
+      <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+        <el-input v-model="usernameFilter" placeholder="按用户名搜索" size="small" clearable @clear="clearFilter" style="width:80%;" />
+        <el-button type="primary" size="small" @click="clearFilter">重置</el-button>
+      </div>
+    </div>
 
     <el-tabs v-model="activeTab">
       <!-- 未完成订单（PAID 和 SHIPPED） -->
       <el-tab-pane label="未完成订单" name="pending">
-        <el-table :data="pendingOrders" stripe style="width: 100%">
+        <el-table :data="pendingOrdersFiltered" stripe style="width: 100%">
           <el-table-column prop="orderId" label="订单号" width="150" />
           <el-table-column prop="userName" label="用户" width="120" />
           <el-table-column prop="totalAmount" label="总金额" width="120">
@@ -45,7 +51,7 @@
 
       <!-- 已完成订单 -->
       <el-tab-pane label="已完成订单" name="completed">
-        <el-table :data="completedOrders" stripe style="width: 100%">
+        <el-table :data="completedOrdersFiltered" stripe style="width: 100%">
           <el-table-column prop="orderId" label="订单号" width="150" />
           <el-table-column prop="userName" label="用户" width="120" />
           <el-table-column prop="totalAmount" label="总金额" width="120">
@@ -83,6 +89,21 @@ import { adminOrderApi } from '@/api'
 
 const activeTab = ref('pending')
 const allOrders = ref([])
+const usernameFilter = ref('')
+
+// 过滤函数：如果 usernameFilter 为空则不过滤
+const matchesUsername = (order) => {
+  if (!usernameFilter.value) return true
+  return String(order.userName || '').toLowerCase().includes(usernameFilter.value.toLowerCase())
+}
+
+// 计算过滤后的未完成订单和已完成订单视图
+const pendingOrdersFiltered = computed(() => pendingOrders.value.filter(matchesUsername))
+const completedOrdersFiltered = computed(() => completedOrders.value.filter(matchesUsername))
+
+const clearFilter = () => {
+  usernameFilter.value = ''
+}
 
 // 未完成订单：PAID 和 SHIPPED（排除 COMPLETED）
 const pendingOrders = computed(() => {
@@ -189,5 +210,50 @@ onMounted(() => {
 
 .no-action {
   color: #ccc;
+}
+
+/* 新增样式：将内联样式移动到这里，便于维护和响应式调整 */
+.title-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.title-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-right: 36px; /* 与右侧留出一些距离 */
+  width: 50%;
+}
+
+.search-input {
+  width: 100%;
+  min-width: 160px;
+}
+
+/* 在中等屏幕上适当调整 */
+@media (max-width: 800px) {
+  .title-actions {
+    width: 60%;
+  }
+}
+
+/* 在小屏幕上堆叠标题和搜索栏 */
+@media (max-width: 600px) {
+  .title-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .title-actions {
+    margin-left: 0;
+    margin-top: 8px;
+    width: 100%;
+  }
+  .search-input {
+    width: 100%;
+  }
 }
 </style>

@@ -44,4 +44,18 @@ public class GoodsServiceImpl implements GoodsService {
         // 确保 goods 存在（可根据需要增加存在性检查）
         return goodsRepository.save(goods);
     }
+
+    @Override
+    public boolean decreaseStock(Integer goodsId, Integer quantity) {
+        Optional<Goods> goodsOpt = goodsRepository.findByGoodsId(goodsId);
+        if (goodsOpt.isPresent()) {
+            Goods goods = goodsOpt.get();
+            if (goods.getStock() >= quantity) {
+                goods.setStock(goods.getStock() - quantity);
+                goodsRepository.save(goods);
+                return true;
+            }
+        }
+        return false;
+    }
 }

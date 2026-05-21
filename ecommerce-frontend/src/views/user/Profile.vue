@@ -125,7 +125,7 @@
         <div v-if="myComments.length === 0" class="empty">暂无评价</div>
         <div v-for="comment in myComments" :key="comment.id" class="comment-item-drawer">
           <div class="comment-header">
-            <span class="comment-goods">商品ID：{{comment.goodsId}}</span>
+            <span class="comment-goods">{{comment.goodsName}}</span>
             <span class="comment-stars">{{ '★'.repeat(comment.star) }}{{ '☆'.repeat(5-comment.star) }}</span>
           </div>
           <div class="comment-content">{{ comment.content }}</div>
@@ -254,7 +254,7 @@ import {
   User, ArrowRight, List, ChatDotRound, Setting, Location, Delete
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
-import { orderApi, commentApi, userApi } from '@/api'
+import { orderApi, commentApi, userApi, goodsApi } from '@/api'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -264,6 +264,7 @@ const allOrders = ref([])
 const orderDrawerVisible = ref(false)
 const orderDrawerTitle = ref('全部订单')
 const currentOrderFilter = ref('all')
+const goods=ref('null')
 
 const confirmReceipt = async (order) => {
   try {
@@ -396,6 +397,7 @@ const submitComment = async () => {
     await commentApi.addComment({
       userName: userStore.user.userName,
       goodsId: currentOrderGoodsId.value,
+      goodsName: goods.value.goodsInfo,
       content: commentForm.value.content,
       star: commentForm.value.star,
       commentLabels: commentForm.value.labels,
@@ -700,6 +702,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   font-size: 16px;
+  color: #6cb1f5;
   margin-bottom: 8px;
 }
 

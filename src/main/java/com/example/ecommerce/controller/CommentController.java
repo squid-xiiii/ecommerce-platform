@@ -2,6 +2,7 @@ package com.example.ecommerce.controller;
 
 import com.example.ecommerce.common.ApiResponse;
 import com.example.ecommerce.entity.Comment;
+import com.example.ecommerce.repository.GoodsRepository;
 import com.example.ecommerce.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,9 +18,16 @@ public class CommentController {
     @Autowired
     private CommentService commentService;
 
+    @Autowired
+    private GoodsRepository goodsRepository;
+
     // 发表评论
     @PostMapping
     public ResponseEntity<ApiResponse<Comment>> addComment(@RequestBody Comment comment) {
+        if (comment.getGoodsName() == null && comment.getGoodsId() != null) {
+            goodsRepository.findByGoodsId(comment.getGoodsId())
+                    .ifPresent(goods -> comment.setGoodsName(goods.getGoodsInfo()));
+        }
         Comment saved = commentService.saveComment(comment);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("评论发表成功", saved));

@@ -11,4 +11,5 @@ public interface GoodsService {
     List<Goods> findByCategory(String category);
     void deleteGoods(String id);
     Goods updateGoods(Goods goods);
+    boolean decreaseStock(Integer goodsId, Integer quantity);
 }
