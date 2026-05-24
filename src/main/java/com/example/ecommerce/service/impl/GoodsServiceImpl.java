@@ -58,4 +58,16 @@ public class GoodsServiceImpl implements GoodsService {
         }
         return false;
     }
+
+    @Override
+    public boolean increaseStock(Integer goodsId, Integer quantity) {
+        Optional<Goods> goodsOpt = goodsRepository.findByGoodsId(goodsId);
+        if (goodsOpt.isPresent()) {
+            Goods goods = goodsOpt.get();
+            goods.setStock(goods.getStock() + quantity);
+            goodsRepository.save(goods);
+            return true;
+        }
+        return false;
+    }
 }

@@ -12,4 +12,5 @@ public interface GoodsService {
     void deleteGoods(String id);
     Goods updateGoods(Goods goods);
     boolean decreaseStock(Integer goodsId, Integer quantity);
+    boolean increaseStock(Integer goodsId, Integer quantity);
 }

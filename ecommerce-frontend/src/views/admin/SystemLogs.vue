@@ -9,7 +9,7 @@
       </el-radio-group>
     </div>
 
-    <el-table :data="logs" stripe style="width: 100%">
+    <el-table :data="pagedLogs" stripe style="width: 100%">
       <el-table-column prop="level" label="级别" width="100">
         <template #default="{ row }">
           <el-tag :type="getLevelType(row.level)" size="small">{{ row.level }}</el-tag>
@@ -26,16 +26,28 @@
         <template #default="{ row }">{{ formatDate(row.createdTime) }}</template>
       </el-table-column>
     </el-table>
+
+    <div v-if="logs.length > pageSize" style="text-align:center;margin-top:12px;">
+      <el-pagination v-model:current-page="currentPage" :page-size="pageSize" :total="logs.length" layout="prev, pager, next" />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { adminLogApi } from '@/api'
 
 const logs = ref([])
 const logType = ref('all')
+
+const pageSize = 25
+const currentPage = ref(1)
+
+const pagedLogs = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return logs.value.slice(start, start + pageSize)
+})
 
 const formatDate = (date) => {
   if (!date) return ''
@@ -54,6 +66,7 @@ const loadLogs = async () => {
     } else {
       logs.value = await adminLogApi.getErrors()
     }
+    currentPage.value = 1
   } catch (error) {
     ElMessage.error('加载日志失败')
   }

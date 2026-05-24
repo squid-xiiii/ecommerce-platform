@@ -11,11 +11,11 @@
     <el-tabs v-model="activeTab">
       <!-- 未完成订单（PAID 和 SHIPPED） -->
       <el-tab-pane label="未完成订单" name="pending">
-        <el-table :data="pendingOrdersFiltered" stripe style="width: 100%">
+        <el-table :data="pagedPendingOrders" stripe style="width: 100%">
           <el-table-column prop="orderId" label="订单号" width="150" />
           <el-table-column prop="userName" label="用户" width="120" />
           <el-table-column prop="totalAmount" label="总金额" width="120">
-            <template #default="{ row }">¥{{ (formatPrice(row.totalAmount)/100).toFixed(2) }}</template>
+            <template #default="{ row }">¥{{ formatPrice(row.totalAmount) }}</template>
           </el-table-column>
           <el-table-column label="商品" min-width="200">
             <template #default="{ row }">
@@ -47,15 +47,19 @@
             </template>
           </el-table-column>
         </el-table>
+
+        <div v-if="isQueried && pendingOrdersFiltered.length > pageSize" style="text-align:center;margin-top:8px;">
+          <el-pagination v-model:current-page="currentPagePending" :page-size="pageSize" :total="pendingOrdersFiltered.length" layout="prev, pager, next" />
+        </div>
       </el-tab-pane>
 
       <!-- 已完成订单 -->
       <el-tab-pane label="已完成订单" name="completed">
-        <el-table :data="completedOrdersFiltered" stripe style="width: 100%">
+        <el-table :data="pagedCompletedOrders" stripe style="width: 100%">
           <el-table-column prop="orderId" label="订单号" width="150" />
           <el-table-column prop="userName" label="用户" width="120" />
           <el-table-column prop="totalAmount" label="总金额" width="120">
-            <template #default="{ row }">¥{{ (formatPrice(row.totalAmount)/100).toFixed(2) }}</template>
+            <template #default="{ row }">¥{{ formatPrice(row.totalAmount) }}</template>
           </el-table-column>
           <!-- 显示商品列表 -->
           <el-table-column label="商品" min-width="200">
@@ -77,6 +81,10 @@
             <template #default="{ row }">{{ formatDate(row.completedDate) }}</template>
           </el-table-column>
         </el-table>
+
+        <div v-if="isQueried && completedOrdersFiltered.length > pageSize" style="text-align:center;margin-top:8px;">
+          <el-pagination v-model:current-page="currentPageCompleted" :page-size="pageSize" :total="completedOrdersFiltered.length" layout="prev, pager, next" />
+        </div>
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -91,6 +99,13 @@ const activeTab = ref('pending')
 const allOrders = ref([])
 const usernameFilter = ref('')
 
+const pageSize = 10
+const currentPagePending = ref(1)
+const currentPageCompleted = ref(1)
+const isQueried = computed(() => {
+  return !!(usernameFilter.value && usernameFilter.value.trim())
+})
+
 // 过滤函数：如果 usernameFilter 为空则不过滤
 const matchesUsername = (order) => {
   if (!usernameFilter.value) return true
@@ -100,6 +115,18 @@ const matchesUsername = (order) => {
 // 计算过滤后的未完成订单和已完成订单视图
 const pendingOrdersFiltered = computed(() => pendingOrders.value.filter(matchesUsername))
 const completedOrdersFiltered = computed(() => completedOrders.value.filter(matchesUsername))
+
+const pagedPendingOrders = computed(() => {
+  if (!isQueried.value) return pendingOrdersFiltered.value
+  const start = (currentPagePending.value - 1) * pageSize
+  return pendingOrdersFiltered.value.slice(start, start + pageSize)
+})
+
+const pagedCompletedOrders = computed(() => {
+  if (!isQueried.value) return completedOrdersFiltered.value
+  const start = (currentPageCompleted.value - 1) * pageSize
+  return completedOrdersFiltered.value.slice(start, start + pageSize)
+})
 
 const clearFilter = () => {
   usernameFilter.value = ''

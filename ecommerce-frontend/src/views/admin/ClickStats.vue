@@ -20,7 +20,7 @@
     <!-- 最近点击记录 -->
     <div class="chart-card">
       <h3>最近点击记录</h3>
-      <el-table :data="recentClicks" stripe>
+      <el-table :data="pagedRecentClicks" stripe>
         <el-table-column prop="pageCode" label="页面代码" width="150" />
         <el-table-column prop="clickPosition" label="点击位置" width="150" />
         <el-table-column prop="userId" label="用户" width="150" />
@@ -29,6 +29,10 @@
         </el-table-column>
         <el-table-column prop="url" label="URL" show-overflow-tooltip />
       </el-table>
+
+      <div v-if="recentClicks.length > pageSize" style="text-align:center;margin-top:12px;">
+        <el-pagination v-model:current-page="currentPageRecent" :page-size="pageSize" :total="recentClicks.length" layout="prev, pager, next" />
+      </div>
     </div>
   </div>
 </template>
@@ -41,12 +45,20 @@ import { adminClickApi } from '@/api'
 const clickStats = ref({ totalCount: 0, pageStats: {} })
 const recentClicks = ref([])
 
+const pageSize = 25
+const currentPageRecent = ref(1)
+
 const pageStatsList = computed(() => {
   const list = []
   for (const [pageCode, count] of Object.entries(clickStats.value.pageStats || {})) {
     list.push({ pageCode, count })
   }
   return list.sort((a, b) => b.count - a.count)
+})
+
+const pagedRecentClicks = computed(() => {
+  const start = (currentPageRecent.value - 1) * pageSize
+  return recentClicks.value.slice(start, start + pageSize)
 })
 
 const formatDate = (date) => {
@@ -63,10 +75,12 @@ const loadData = async () => {
   try {
     const [stats, clicks] = await Promise.all([
       adminClickApi.getStats(),
-      adminClickApi.getList(50)
+      // 请求全部点击记录（传入大 limit）
+      adminClickApi.getList(1000000)
     ])
     clickStats.value = stats
     recentClicks.value = clicks
+    currentPageRecent.value = 1
   } catch (error) {
     ElMessage.error('加载数据失败')
   }

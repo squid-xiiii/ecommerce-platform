@@ -31,7 +31,7 @@
     </div>
 
     <!-- 商品列表 -->
-    <el-table :data="filteredGoodsList" stripe style="width: 100%">
+    <el-table :data="pagedFilteredGoods" stripe style="width: 100%">
       <el-table-column prop="goodsId" label="商品编号" width="120" />
       <el-table-column prop="goodsInfo" label="商品名称" min-width="250" show-overflow-tooltip />
       <el-table-column prop="category" label="分类" width="120" />
@@ -46,6 +46,10 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <div v-if="isQueried && filteredGoodsList.length > pageSize" style="text-align:center;margin-top:12px;">
+      <el-pagination v-model:current-page="currentPage" :page-size="pageSize" :total="filteredGoodsList.length" layout="prev, pager, next" />
+    </div>
 
     <!-- 添加/编辑弹窗（保持不变） -->
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px">
@@ -98,6 +102,12 @@ const dialogTitle = ref('')
 const editId = ref(null)
 const formRef = ref()
 
+const pageSize = 15
+const currentPage = ref(1)
+const isQueried = computed(() => {
+  return (searchKeyword.value && searchKeyword.value.trim()) || filterCategory.value
+})
+
 // 过滤后的商品列表（先按分类，再按关键词搜索）
 const filteredGoodsList = computed(() => {
   let result = goodsList.value
@@ -117,6 +127,12 @@ const filteredGoodsList = computed(() => {
   }
 
   return result
+})
+
+const pagedFilteredGoods = computed(() => {
+  if (!isQueried.value) return filteredGoodsList.value
+  const start = (currentPage.value - 1) * pageSize
+  return filteredGoodsList.value.slice(start, start + pageSize)
 })
 
 const form = ref({
@@ -144,6 +160,7 @@ const formatPrice = (price) => {
 const loadGoods = async () => {
   try {
     goodsList.value = await adminGoodsApi.getList()
+    currentPage.value = 1
   } catch (error) {
     ElMessage.error('加载商品失败')
   }

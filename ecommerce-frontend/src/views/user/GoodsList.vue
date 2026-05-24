@@ -14,7 +14,7 @@
     </div>
 
     <div class="goods-grid">
-      <div v-for="goods in goodsList" :key="goods.goodsId" class="goods-card" @click="goToDetail(goods.goodsId)">
+      <div v-for="goods in pagedGoodsList" :key="goods.goodsId" class="goods-card" @click="goToDetail(goods.goodsId)">
         <div class="goods-card-img">
           <el-icon :size="48"><Goods /></el-icon>
         </div>
@@ -27,6 +27,10 @@
     </div>
 
     <div v-if="goodsList.length === 0" class="empty">暂无商品</div>
+
+    <div v-if="isQueried && goodsList.length > pageSize" class="pagination-wrapper" style="text-align:center;margin-top:16px;">
+      <el-pagination v-model:current-page="currentPage" :page-size="pageSize" :total="goodsList.length" layout="prev, pager, next" />
+    </div>
   </div>
 </template>
 
@@ -37,6 +41,7 @@ import { ElMessage } from 'element-plus'
 import { Search, Goods } from '@element-plus/icons-vue'
 import { goodsApi, clickApi } from '@/api'
 import { useUserStore } from '@/stores/user'
+import { cartApi } from '@/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -44,7 +49,12 @@ const userStore = useUserStore()
 const allGoods = ref([])
 const keyword = ref('')
 const category = ref('')
-import { cartApi } from '@/api'
+
+const pageSize = 9
+const currentPage = ref(1)
+const isQueried = computed(() => {
+  return (keyword.value && keyword.value.trim()) || category.value
+})
 
 // 记录点击日志
 const logClick = async (pageCode, clickPosition, pageContent, url) => {
@@ -70,10 +80,17 @@ const goodsList = computed(() => {
   if (keyword.value && keyword.value.trim()) {
     const searchTerm = keyword.value.trim().toLowerCase()
     result = result.filter(g =>
-      g.goodsInfo.toLowerCase().includes(searchTerm)
+      g.goodsInfo.toLowerCase().includes(searchTerm) ||
+      (g.specificationsInfo && g.specificationsInfo.toLowerCase().includes(searchTerm))
     )
   }
   return result
+})
+
+const pagedGoodsList = computed(() => {
+  if (!isQueried.value) return goodsList.value
+  const start = (currentPage.value - 1) * pageSize
+  return goodsList.value.slice(start, start + pageSize)
 })
 
 const formatPrice = (price) => {
@@ -83,6 +100,7 @@ const formatPrice = (price) => {
 const loadGoods = async () => {
   try {
     allGoods.value = await goodsApi.getList()
+    currentPage.value = 1
   } catch (error) {
     ElMessage.error('加载商品失败')
   }
@@ -90,10 +108,12 @@ const loadGoods = async () => {
 
 const handleCategoryChange = (val) => {
   logClick('category_filter', val, `筛选分类:${val}`, route.path)
+  currentPage.value = 1
 }
 
 const handleSearch = () => {
   logClick('search', keyword.value, `搜索关键词:${keyword.value}`, route.path)
+  currentPage.value = 1
 }
 
 const goToDetail = (id, goodsInfo) => {
