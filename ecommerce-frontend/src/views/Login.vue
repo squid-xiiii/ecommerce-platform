@@ -137,7 +137,7 @@ const handleLogin = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg,white 0%, #ddd7dd 100%);
   padding: 20px;
 }
 

@@ -1,15 +1,5 @@
 <template>
   <div class="click-stats">
-    <h2 class="page-title">点击量统计</h2>
-
-    <!-- 统计卡片 -->
-    <div class="stats-card">
-      <div class="total-clicks">
-        <div class="total-label">总点击量</div>
-        <div class="total-value">{{ clickStats.totalCount || 0 }}</div>
-      </div>
-    </div>
-
     <!-- 按页面统计 -->
     <div class="chart-card">
       <h3>按页面统计</h3>
@@ -125,7 +115,7 @@ onMounted(() => {
 }
 
 .chart-card h3 {
-  font-size: 16px;
+  font-size: 18px;
   margin-bottom: 16px;
   color: #333;
 }
