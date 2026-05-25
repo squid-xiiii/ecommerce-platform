@@ -2,6 +2,7 @@
   <div class="dashboard">
     <h2 class="page-title">数据看板</h2>
 
+    <!-- 统计卡片 -->
     <div class="stats-grid">
       <div v-for="stat in statCards" :key="stat.label" class="stat-card">
         <div class="stat-icon" :style="{ background: stat.color }">
@@ -14,6 +15,7 @@
       </div>
     </div>
 
+    <!-- 商品分类统计 -->
     <div class="chart-row">
       <div class="chart-card">
         <h3>商品分类统计</h3>
@@ -29,13 +31,30 @@
         <div v-else class="loading">加载中...</div>
       </div>
     </div>
+
+    <!-- 热门商品排行 -->
+    <div class="ranking-section">
+      <h3>热门商品排行</h3>
+      <div v-if="goodsRankingLoading" class="loading">加载中...</div>
+      <div v-else-if="goodsRanking.length === 0" class="empty">暂无点击数据</div>
+      <div v-else class="ranking-list">
+        <div v-for="(goods, index) in goodsRanking" :key="goods.goodsId" class="ranking-item">
+          <div class="ranking-number" :class="getRankClass(index)">{{ index + 1 }}</div>
+          <div class="ranking-name">{{ goods.goodsName }}</div>
+          <div class="ranking-count">{{ goods.clickCount }} 次点击</div>
+          <div class="ranking-bar">
+            <div class="ranking-bar-fill" :style="{ width: getClickPercent(goods.clickCount) + '%' }"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { statsApi } from '@/api'
+import { statsApi, adminUserApi } from '@/api'
 
 const stats = ref({
   totalGoods: 0,
@@ -47,8 +66,10 @@ const stats = ref({
   goodsByCategory: {}
 })
 
-const totalGoods = computed(() => stats.value.totalGoods)
+const goodsRanking = ref([])
+const goodsRankingLoading = ref(false)
 
+const totalGoods = computed(() => stats.value.totalGoods)
 const goodsByCategory = computed(() => stats.value.goodsByCategory)
 
 const statCards = computed(() => [
@@ -65,6 +86,18 @@ const getPercent = (count, total) => {
   return ((count / total) * 100).toFixed(1)
 }
 
+const getClickPercent = (count) => {
+  const max = Math.max(...goodsRanking.value.map(g => g.clickCount), 1)
+  return (count / max * 100).toFixed(1)
+}
+
+const getRankClass = (index) => {
+  if (index === 0) return 'rank-1'
+  if (index === 1) return 'rank-2'
+  if (index === 2) return 'rank-3'
+  return ''
+}
+
 const loadStats = async () => {
   try {
     stats.value = await statsApi.getStats()
@@ -75,8 +108,22 @@ const loadStats = async () => {
   }
 }
 
+const loadGoodsRanking = async () => {
+  goodsRankingLoading.value = true
+  try {
+    goodsRanking.value = await adminUserApi.getGoodsClickRanking() || []
+    console.log('商品排行:', goodsRanking.value)
+  } catch (error) {
+    console.error('加载商品排行失败', error)
+    goodsRanking.value = []
+  } finally {
+    goodsRankingLoading.value = false
+  }
+}
+
 onMounted(() => {
   loadStats()
+  loadGoodsRanking()
 })
 </script>
 
@@ -141,6 +188,7 @@ onMounted(() => {
   background: white;
   border-radius: 12px;
   padding: 20px;
+  margin-bottom: 20px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
@@ -191,7 +239,88 @@ onMounted(() => {
   transition: width 0.3s;
 }
 
-.loading {
+/* 热门商品排行样式 */
+.ranking-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.ranking-section h3 {
+  font-size: 16px;
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+  background: #f8f9fc;
+  border-radius: 8px;
+}
+
+.ranking-number {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e9ecef;
+  border-radius: 50%;
+  font-weight: bold;
+}
+
+.ranking-number.rank-1 {
+  background: #ffd700;
+  color: #333;
+}
+
+.ranking-number.rank-2 {
+  background: #c0c0c0;
+  color: #333;
+}
+
+.ranking-number.rank-3 {
+  background: #cd7f32;
+  color: white;
+}
+
+.ranking-name {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+}
+
+.ranking-count {
+  width: 80px;
+  font-size: 13px;
+  color: #f56c6c;
+}
+
+.ranking-bar {
+  width: 150px;
+  height: 6px;
+  background: #e9ecef;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ranking-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #409eff, #36cea0);
+  border-radius: 3px;
+}
+
+.loading, .empty {
   text-align: center;
   padding: 40px;
   color: #999;

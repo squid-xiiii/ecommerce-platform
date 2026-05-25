@@ -50,7 +50,8 @@ const routes = [
             { path: 'goods', name: 'GoodsManage', component: GoodsManage },
             { path: 'orders', name: 'OrdersManage', component: OrdersManage },
             { path: 'clicks', name: 'ClickStats', component: ClickStats },
-            { path: 'logs', name: 'SystemLogs', component: SystemLogs }
+            { path: 'logs', name: 'SystemLogs', component: SystemLogs },
+            { path: 'users', name: 'UserManage', component: () => import('@/views/admin/UserManage.vue') }
         ]
     },
 

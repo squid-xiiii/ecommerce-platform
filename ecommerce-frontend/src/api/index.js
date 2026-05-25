@@ -137,4 +137,21 @@ export const adminLogApi = {
     getErrors: () => api.get('/admin/logs/errors')
 }
 
+// ==================== 用户管理 API ====================
+export const adminUserApi = {
+    getAllUsers: () => api.get('/admin/users'),
+    getUserClickStats: (userId) => api.get(`/admin/users/${userId}/clicks`),
+    refreshUserStats: (userId) => api.post(`/admin/users/${userId}/refresh-stats`),
+    getUserClickRanking: () => api.get('/admin/users/user-ranking'),
+    getGoodsClickRanking: () => api.get('/admin/users/goods-ranking'),
+    getRecommendations: (userId, limit = 12) => api.get(`/admin/users/${userId}/recommend`, { params: { limit } }),
+    sendAd: (userId, content) => api.post(`/admin/users/${userId}/send-ad`, { content }),
+    getUserMessages: (userId) => api.get(`/admin/users/${userId}/messages`),
+    markMessageRead: (userId, adId) => api.put(`/admin/users/${userId}/messages/${adId}/read`)
+}
+
+export const userRecommendApi = {
+    getRecommendations: (userId, limit = 12) => api.get(`/admin/users/${userId}/recommend`, { params: { limit } })
+}
+
 export default api

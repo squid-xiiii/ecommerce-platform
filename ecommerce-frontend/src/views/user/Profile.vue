@@ -259,6 +259,9 @@ import { orderApi, commentApi, userApi, goodsApi } from '@/api'
 const router = useRouter()
 const userStore = useUserStore()
 
+const userMessages = ref([])
+const messageDrawerVisible = ref(false)
+
 // 订单相关
 const allOrders = ref([])
 const orderDrawerVisible = ref(false)

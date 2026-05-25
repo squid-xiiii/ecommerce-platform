@@ -31,14 +31,16 @@
       </div>
     </div>
 
-    <!-- 热门推荐 -->
+    <!-- 热门推荐（个性化） -->
     <div class="section">
       <div class="section-header">
-        <h3>热门推荐</h3>
+        <h3>为你推荐</h3>
         <span class="more" @click="handleEntryClick('更多商品')">更多 ></span>
       </div>
-      <div class="goods-grid">
-        <div v-for="goods in hotRecommendGoods" :key="goods.goodsId" class="goods-card" @click="handleGoodsClick(goods.goodsId, goods.goodsInfo)">
+      <div v-if="recommendLoading" class="loading">加载推荐中...</div>
+      <div v-else-if="recommendGoods.length === 0" class="empty">暂无推荐，先去逛逛吧</div>
+      <div v-else class="goods-grid">
+        <div v-for="goods in recommendGoods" :key="goods.goodsId" class="goods-card" @click="handleGoodsClick(goods.goodsId, goods.goodsInfo)">
           <div class="goods-img">
             <el-icon :size="32"><Goods /></el-icon>
           </div>
@@ -53,17 +55,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Goods } from '@element-plus/icons-vue'
-import { goodsApi, clickApi } from '@/api'
+import { goodsApi, clickApi, userRecommendApi } from '@/api'
 import { useUserStore } from '@/stores/user'
-import { cartApi } from '@/api'
 
 const router = useRouter()
 const userStore = useUserStore()
-const allGoods = ref([])
+const recommendGoods = ref([])
+const recommendLoading = ref(false)
+const hasLoaded = ref(false)  // 防止重复加载
 
 const banners = [
   { text: '新品上市', bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
@@ -98,14 +101,18 @@ const logBannerClick = (index) => {
 }
 
 // 快捷入口点击
-const handleEntryClick = (entryName) => {
+const handleEntryClick = async (entryName) => {
   logClick('quick_entry', entryName, entryName, '/')
-  if (entryName === '热门推荐') {
-    router.push('/user/goods')
-  } else if (entryName === '更多商品') {
-    router.push('/user/goods')
-  } else {
-    router.push(`/user/goods?category=${entryName}`)
+  try {
+    // 统一跳转到商品列表页，非热门/更多通过 query 传递分类
+    if (entryName === '热门推荐' || entryName === '更多商品') {
+      await router.push({ path: '/user/goods' })
+    } else {
+      await router.push({ path: '/user/goods', query: { category: entryName } })
+    }
+  } catch (err) {
+    // 忽略重复导航或其它被阻止的导航错误
+    console.warn('导航失败或被忽略:', err)
   }
 }
 
@@ -115,38 +122,70 @@ const handleGoodsClick = (goodsId, goodsName) => {
   router.push(`/user/goods/${goodsId}`)
 }
 
-// 热门推荐：各类别各2个
-const hotRecommendGoods = computed(() => {
-  const categories = ['笔记本电脑', '手机', '配件']
-  const result = []
-  categories.forEach(category => {
-    const categoryGoods = allGoods.value.filter(g => g.category === category)
-    result.push(...categoryGoods.slice(0, 2))
-  })
-  return result
-})
-
 const formatPrice = (price) => {
   return (price / 100).toFixed(2)
 }
 
-const goToGoods = () => {
-  logClick('navigation', '商品', '商品列表页', '/user/goods')
-  router.push('/user/goods')
-}
-const goToCategory = (category) => router.push(`/user/goods?category=${category}`)
-const goToDetail = (id) => router.push(`/user/goods/${id}`)
+// 加载个性化推荐（只加载一次，不会消失）
+const loadRecommendations = async () => {
+  // 如果已经加载过，不再重复加载
+  if (hasLoaded.value) return
 
-const loadGoods = async () => {
+  if (!userStore.user) {
+    // 未登录时加载默认商品
+    await loadDefaultGoods()
+    hasLoaded.value = true
+    return
+  }
+
+  recommendLoading.value = true
   try {
-    allGoods.value = await goodsApi.getList()
+    const goodsIds = await userRecommendApi.getRecommendations(userStore.user.userName, 6)
+    const goodsList = []
+    for (const id of goodsIds) {
+      try {
+        const goods = await goodsApi.getDetail(id)
+        goodsList.push(goods)
+      } catch (e) {
+        console.error('获取商品失败', id)
+      }
+    }
+    recommendGoods.value = goodsList
+    hasLoaded.value = true
   } catch (error) {
+    console.error('加载推荐失败', error)
+    await loadDefaultGoods()
+    hasLoaded.value = true
+  } finally {
+    recommendLoading.value = false
+  }
+}
+
+// 加载默认商品（未登录时）
+const loadDefaultGoods = async () => {
+  try {
+    const allGoods = await goodsApi.getList()
+    // 取前6个商品
+    recommendGoods.value = allGoods.slice(0, 6)
+  } catch (error) {
+    console.error('加载商品失败', error)
     ElMessage.error('加载商品失败')
   }
 }
 
+// 监听用户登录状态变化，重新加载推荐
+const refreshRecommendations = () => {
+  // 重置加载状态，重新获取推荐
+  hasLoaded.value = false
+  recommendGoods.value = []
+  loadRecommendations()
+}
+
+// 暴露刷新方法供父组件调用
+defineExpose({ refreshRecommendations })
+
 onMounted(() => {
-  loadGoods()
+  loadRecommendations()
   // 记录页面访问
   logClick('page_view', 'home', '首页访问', window.location.pathname)
 })
@@ -251,7 +290,6 @@ onMounted(() => {
   opacity: 0.7;
 }
 
-/* 修改为3列布局 */
 .goods-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -310,5 +348,11 @@ onMounted(() => {
 .goods-price::before {
   content: '¥';
   font-size: 12px;
+}
+
+.loading, .empty {
+  text-align: center;
+  padding: 60px;
+  color: #999;
 }
 </style>

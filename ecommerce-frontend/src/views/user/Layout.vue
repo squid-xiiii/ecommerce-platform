@@ -25,11 +25,20 @@
           </div>
         </div>
         <div class="user-info">
+          <!-- 消息通知铃铛 -->
+          <el-badge :value="unreadCount" :hidden="unreadCount === 0" class="message-badge">
+            <div class="message-icon" @click="openMessages">
+              <el-icon :size="22"><Bell /></el-icon>
+            </div>
+          </el-badge>
+
+          <!-- 购物车图标（保留但放在消息铃铛后面） -->
           <el-badge :value="cartCount" :hidden="cartCount === 0" class="cart-badge">
             <div class="cart-icon" @click="goTo('/user/cart')">
               <el-icon :size="22"><ShoppingCart /></el-icon>
             </div>
           </el-badge>
+
           <el-dropdown trigger="click" @command="handleDropdown">
             <div class="user-avatar">
               <el-icon :size="20"><User /></el-icon>
@@ -39,6 +48,7 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+                <el-dropdown-item command="messages">消息通知</el-dropdown-item>
                 <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -49,6 +59,16 @@
     <div class="main">
       <router-view />
     </div>
+
+    <!-- 消息通知弹窗 -->
+    <el-drawer v-model="messageDrawerVisible" title="消息通知" direction="rtl" size="50%">
+      <div v-if="userMessages.length === 0" class="empty">暂无消息</div>
+      <div v-for="msg in userMessages" :key="msg.adId" class="message-item" @click="markAsRead(msg)">
+        <div class="message-content">{{ msg.content }}</div>
+        <div class="message-time">{{ formatDate(msg.sentTime) }}</div>
+        <div class="message-status" :class="msg.status">{{ msg.status === 'read' ? '已读' : '未读' }}</div>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -56,14 +76,18 @@
 import { ref, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ShoppingCart, User, ArrowDown } from '@element-plus/icons-vue'
+import { ShoppingCart, User, ArrowDown, Bell } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+import { adminUserApi } from '@/api'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 const activeMenu = ref('home')
 const cartCount = ref(0)
+const unreadCount = ref(0)
+const userMessages = ref([])
+const messageDrawerVisible = ref(false)
 
 watch(() => route.path, (path) => {
   if (path === '/user') activeMenu.value = 'home'
@@ -77,9 +101,50 @@ const updateCartCount = () => {
   cartCount.value = cart.reduce((sum, item) => sum + item.quantity, 0)
 }
 
+// 加载用户消息
+const loadUserMessages = async () => {
+  if (!userStore.user) return
+  try {
+    const messages = await adminUserApi.getUserMessages(userStore.user.userName)
+    userMessages.value = messages || []
+    unreadCount.value = userMessages.value.filter(m => m.status !== 'read').length
+  } catch (error) {
+    console.error('加载消息失败', error)
+  }
+}
+
+// 打开消息弹窗
+const openMessages = () => {
+  messageDrawerVisible.value = true
+}
+
+// 标记消息为已读
+const markAsRead = async (msg) => {
+  if (msg.status === 'read') return
+  try {
+    await adminUserApi.markMessageRead(userStore.user.userName, msg.adId)
+    msg.status = 'read'
+    unreadCount.value = userMessages.value.filter(m => m.status !== 'read').length
+  } catch (error) {
+    console.error('标记失败', error)
+  }
+}
+
+const formatDate = (date) => {
+  if (!date) return ''
+  return new Date(date).toLocaleString()
+}
+
 onMounted(() => {
   updateCartCount()
   window.addEventListener('storage', updateCartCount)
+  loadUserMessages()
+  // 定时刷新消息
+  setInterval(() => {
+    if (userStore.user) {
+      loadUserMessages()
+    }
+  }, 30000)
 })
 
 const goTo = (path) => router.push(path)
@@ -87,6 +152,8 @@ const goTo = (path) => router.push(path)
 const handleDropdown = (command) => {
   if (command === 'profile') {
     router.push('/user/profile')
+  } else if (command === 'messages') {
+    openMessages()
   } else if (command === 'logout') {
     userStore.logout()
     ElMessage.success('已退出登录')
@@ -186,6 +253,7 @@ const handleDropdown = (command) => {
   gap: 20px;
 }
 
+.message-badge :deep(.el-badge__content),
 .cart-badge :deep(.el-badge__content) {
   background: #f56c6c;
   border: none;
@@ -195,7 +263,7 @@ const handleDropdown = (command) => {
   padding: 0 5px;
 }
 
-.cart-icon {
+.message-icon, .cart-icon {
   cursor: pointer;
   color: #5a6874;
   transition: all 0.3s ease;
@@ -203,7 +271,7 @@ const handleDropdown = (command) => {
   border-radius: 50%;
 }
 
-.cart-icon:hover {
+.message-icon:hover, .cart-icon:hover {
   background: rgba(64, 158, 255, 0.1);
   color: #409eff;
 }
@@ -231,5 +299,52 @@ const handleDropdown = (command) => {
 
 .main {
   min-height: calc(100vh - 70px);
+}
+
+/* 消息弹窗样式 */
+.message-item {
+  padding: 16px;
+  border-bottom: 1px solid #f0f2f5;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.message-item:hover {
+  background: #f8f9fc;
+}
+
+.message-content {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.message-time {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.message-status {
+  font-size: 11px;
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.message-status.sent {
+  background: #e6f7ff;
+  color: #1890ff;
+}
+
+.message-status.read {
+  background: #f6ffed;
+  color: #52c41a;
+}
+
+.empty {
+  text-align: center;
+  padding: 40px;
+  color: #999;
 }
 </style>
