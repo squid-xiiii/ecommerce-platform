@@ -140,7 +140,7 @@ const addToCart = async (goods) => {
 onMounted(() => {
   loadGoods()
   if (route.query.category) {
-    currentCategory.value = route.query.category
+    category.value = route.query.category
   }
   if (route.query.keyword) {
     keyword.value = route.query.keyword
